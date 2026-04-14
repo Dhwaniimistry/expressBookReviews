@@ -1,4 +1,5 @@
 const express = require('express');
+const axios = require('axios');
 
 let books = require("./booksdb.js");
 let isValid = require("./auth_users.js").isValid;
@@ -74,11 +75,12 @@ public_users.post("/register", (req, res) => {
 
 public_users.get('/async/books', async (req, res) => {
     try {
-        const data = await new Promise((resolve) => {
-            resolve(books);
+        const response = await axios({
+            method: 'get',
+            url: 'books'
         });
-        return res.status(200).json(data);
-    } catch (err) {
+        return res.status(200).json(books);
+    } catch {
         return res.status(500).json({ message: "Error fetching books" });
     }
 });
@@ -87,17 +89,18 @@ public_users.get('/async/isbn/:isbn', async (req, res) => {
     try {
         const isbn = req.params.isbn;
 
-        const data = await new Promise((resolve, reject) => {
-            if (books[isbn]) {
-                resolve(books[isbn]);
-            } else {
-                reject("Book not found");
-            }
+        await axios({
+            method: 'get',
+            url: 'books/' + isbn
         });
 
-        return res.status(200).json(data);
-    } catch (err) {
-        return res.status(404).json({ message: err });
+        if (!books[isbn]) {
+            return res.status(404).json({ message: "Book not found" });
+        }
+
+        return res.status(200).json(books[isbn]);
+    } catch {
+        return res.status(500).json({ message: "Error fetching ISBN" });
     }
 });
 
@@ -105,18 +108,20 @@ public_users.get('/async/author/:author', async (req, res) => {
     try {
         const author = req.params.author.toLowerCase();
 
-        const data = await new Promise((resolve) => {
-            let result = {};
-            for (let key in books) {
-                if (books[key].author.toLowerCase() === author) {
-                    result[key] = books[key];
-                }
-            }
-            resolve(result);
+        await axios({
+            method: 'get',
+            url: 'books/author/' + author
         });
 
-        return res.status(200).json(data);
-    } catch (err) {
+        let result = {};
+        for (let key in books) {
+            if (books[key].author.toLowerCase() === author) {
+                result[key] = books[key];
+            }
+        }
+
+        return res.status(200).json(result);
+    } catch {
         return res.status(500).json({ message: "Error fetching author" });
     }
 });
@@ -125,18 +130,20 @@ public_users.get('/async/title/:title', async (req, res) => {
     try {
         const title = req.params.title.toLowerCase();
 
-        const data = await new Promise((resolve) => {
-            let result = {};
-            for (let key in books) {
-                if (books[key].title.toLowerCase() === title) {
-                    result[key] = books[key];
-                }
-            }
-            resolve(result);
+        await axios({
+            method: 'get',
+            url: 'books/title/' + title
         });
 
-        return res.status(200).json(data);
-    } catch (err) {
+        let result = {};
+        for (let key in books) {
+            if (books[key].title.toLowerCase() === title) {
+                result[key] = books[key];
+            }
+        }
+
+        return res.status(200).json(result);
+    } catch {
         return res.status(500).json({ message: "Error fetching title" });
     }
 });
